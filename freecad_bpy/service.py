@@ -62,7 +62,11 @@ def action_import_file(path: str) -> None:
         case ".obj":
             import_file(
                 path,
-                lambda path: bpy.ops.wm.obj_import(filepath=str(path)),
+                lambda path: bpy.ops.wm.obj_import(
+                    filepath=str(path),
+                    forward_axis="Y",
+                    up_axis="Z",
+                ),
             )
         case ".gltf":
             import_file(
@@ -87,7 +91,7 @@ def import_objects(path: str, operator: Callable[[str], None]) -> list[str]:
     return after - before
 
 
-def import_file(path: str, operator: Callable[[str], None]) -> None:
+def import_file(path: str, operator: Callable[[str], None], scale: float = 1.0) -> None:
     """
     Import a file and replace the mesh data of existing objects.
 
@@ -100,6 +104,9 @@ def import_file(path: str, operator: Callable[[str], None]) -> None:
     deletes the imported objects.
     """
     for name in import_objects(path, operator):
+        if scale != 1.0:
+            obj = bpy.data.objects.get(name)
+            obj.scale = (scale, scale, scale)
         base, _, _ = name.rpartition(".")
         if base and bpy.data.objects.get(base):
             copy_mesh_data(name, base)
@@ -132,11 +139,3 @@ def copy_mesh_data(source_name: str, target_name: str) -> None:
         bm.to_mesh(target.data)
         bm.free()
         target.data.update()
-
-
-def register() -> None:
-    service.start()
-
-
-def unregister() -> None:
-    service.stop()
