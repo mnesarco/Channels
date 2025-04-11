@@ -1,0 +1,19 @@
+schema_version = "1.0.0"
+blender_version_min = "4.2.0"
+
+id = "freecad_channels"
+version = "1.0.0"
+name = "FreeCAD Channels"
+tagline = "FreeCAD communication channels"
+type = "add-on"
+
+maintainer = "Frank David Martínez Muñoz <mnesarco@gmail.com>"
+tags = ["Development", "Import-Export"]
+license = ["SPDX:LGPL-3.0-or-later"]
+copyright = ["2025 Frank David Martínez Muñoz"]
+
+[permissions]
+files = "Import/export files from/to disk"
+
+# website = "https://extensions.blender.org/add-ons/freecad_channels/"
+
