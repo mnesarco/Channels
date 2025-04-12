@@ -71,7 +71,9 @@ def action_import_file(path: str) -> None:
         case ".gltf":
             import_file(
                 path,
-                lambda path: bpy.ops.import_scene.gltf(filepath=str(path)),
+                lambda path: bpy.ops.import_scene.gltf(
+                    filepath=str(path),
+                ),
             )
         case _:
             logger.warning("Unknown file format: %s", str(path))
@@ -91,7 +93,7 @@ def import_objects(path: str, operator: Callable[[str], None]) -> list[str]:
     return after - before
 
 
-def import_file(path: str, operator: Callable[[str], None], scale: float = 1.0) -> None:
+def import_file(path: str, operator: Callable[[str], None]) -> None:
     """
     Import a file and replace the mesh data of existing objects.
 
@@ -104,9 +106,6 @@ def import_file(path: str, operator: Callable[[str], None], scale: float = 1.0) 
     deletes the imported objects.
     """
     for name in import_objects(path, operator):
-        if scale != 1.0:
-            obj = bpy.data.objects.get(name)
-            obj.scale = (scale, scale, scale)
         base, _, _ = name.rpartition(".")
         if base and bpy.data.objects.get(base):
             copy_mesh_data(name, base)
