@@ -111,7 +111,6 @@ def import_file(path: str, operator: Callable[[str], None]) -> None:
             copy_mesh_data(name, base)
             delete_object(name)
 
-
 def delete_object(name: str) -> None:
     """
     Delete a Blender object.

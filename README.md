@@ -62,3 +62,11 @@ Now you can send objects to Blender using the context menu:
 Then your Blender scene gets updated:
 
 ![Download](freecad/channels/resources/docs/blender-view.png)
+
+
+# Known Issues
+
+1. .obj scaling differs from .gltf scaling.
+2. .gltf works well with FreeCAD 1.0 but fails with 1.1 because there is an unsolved BUG in FreeCAD right now with colors/materials at export: https://github.com/FreeCAD/FreeCAD/issues/20621
+3. When the FreeCAD bug gets resolved, it is expected that the usage of .obj format is no longer needed as gltf provides more information.
+4. This has been tested only on Linux, reports from Mac/Windows will be appreciated.
