@@ -3,19 +3,15 @@
     <description>FreeCAD Channels</description>
     <version>0.1.0.dev2</version>
     <content>
-
+        <!-- No Workbenches, No Macros, No Themes -->
     </content>
     <date>2025-04-11</date>
     <pythonmin>3.10</pythonmin>
     <icon>freecad/channels/resources/icons/channels.svg</icon>
     <license file="LICENSE">LGPL-3.0-or-later</license>
     <freecadmin>1.0</freecadmin>
-    <name>Channels</name>
-    <description>FreeCAD Channels</description>
     <license>LGPL-3.0-or-later</license>
-    <pythonmin>3.10</pythonmin>
     <icon>freecad/channels/resources/icons/channels.svg</icon>
-    <freecadmin>1.0</freecadmin>
     <maintainer email="mnesarco@gmail.com">Frank David Martínez Muñoz</maintainer>
     <author email="mnesarco@gmail.com">Frank David Martínez Muñoz</author>
     <tag>2d</tag>
