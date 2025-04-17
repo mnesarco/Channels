@@ -234,31 +234,32 @@ class AutoGui(QObject):
         widgets: list[tuple[PrefWidget, PreferencePreset]] = []
         sections: list[tuple[ui.QGroupBox, dtr | str]] = []
 
-        with ui.Container(windowTitle=str(title), contentsMargins=(0, 0, 0, 0)) as form:
-            selector = PresetSelector(items, widgets)
-            with ui.GroupBox(contentsMargins=(0, 0, 0, 0)):
-                section: ui.GroupBox = None
-                for item in items:
-                    if isinstance(item, Preference):
-                        widget = pref_widget(item)
-                        setup_validators(widget, item)
-                        widgets.append((widget, item.preset("Default")))
-                    elif isinstance(item, tuple):
-                        _item, _input, *_ = item
-                        widget = pref_widget(_item, builder=_input)
-                        setup_validators(widget, item)
-                        widgets.append((widget, _item.preset("Default")))
-                    elif isinstance(item, (str, dtr)):
-                        if section:
-                            section.__exit__(None, None, None)
-                        ui.Spacing(15)
-                        section = ui.GroupBox(title=str(item), contentsMargins=ui.margins())
-                        sections.append((section.__enter__(), item))
-                    elif isinstance(item, ui.QWidget):
-                        ui.place_widget(item)
-                if section:
-                    section.__exit__(None, None, None)
-                ui.Stretch()
+        margins = ui.margins()
+        with ui.Container(windowTitle=str(title), contentsMargins=margins) as form:
+            with ui.GroupBox(contentsMargins=margins, title=str(dtr("Preferences", "Preset:"))):
+                selector = PresetSelector(items, widgets)
+            section: ui.GroupBox = None
+            for item in items:
+                if isinstance(item, Preference):
+                    widget = pref_widget(item)
+                    setup_validators(widget, item)
+                    widgets.append((widget, item.preset("Default")))
+                elif isinstance(item, tuple):
+                    _item, _input, *_ = item
+                    widget = pref_widget(_item, builder=_input)
+                    setup_validators(widget, item)
+                    widgets.append((widget, _item.preset("Default")))
+                elif isinstance(item, (str, dtr)):
+                    if section:
+                        section.__exit__(None, None, None)
+                    ui.Spacing(15)
+                    section = ui.GroupBox(title=str(item), contentsMargins=margins)
+                    sections.append((section.__enter__(), item))
+                elif isinstance(item, ui.QWidget):
+                    ui.place_widget(item)
+            if section:
+                section.__exit__(None, None, None)
+            ui.Stretch()
 
         form.onLanguageChange.connect(self.apply_translations)
 
