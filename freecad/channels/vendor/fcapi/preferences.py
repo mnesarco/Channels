@@ -236,7 +236,7 @@ class AutoGui(QObject):
 
         margins = ui.margins()
         with ui.Container(windowTitle=str(title), contentsMargins=margins) as form:
-            with ui.GroupBox(contentsMargins=margins, title=str(dtr("Preferences", "Preset:"))):
+            with ui.GroupBox(contentsMargins=margins, title=str(dtr("Preferences", "Preset"))):
                 selector = PresetSelector(items, widgets)
             section: ui.GroupBox = None
             for item in items:
