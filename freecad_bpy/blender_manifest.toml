@@ -9,7 +9,7 @@ type = "add-on"
 
 maintainer = "Frank David Martínez Muñoz <mnesarco@gmail.com>"
 tags = ["Development", "Import-Export"]
-license = ["SPDX:LGPL-3.0-or-later"]
+license = ["SPDX:GPL-3.0"]
 copyright = ["2025 Frank David Martínez Muñoz"]
 
 [permissions]

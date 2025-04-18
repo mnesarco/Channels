@@ -1,4 +1,4 @@
-# SPDX-License: LGPL-3.0-or-later
+# SPDX-License: GPL-3.0
 # (c) 2025 Frank David Martínez Muñoz. <mnesarco at gmail.com>
 
 from __future__ import annotations
