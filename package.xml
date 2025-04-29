@@ -3,14 +3,13 @@
     <description>FreeCAD Channels</description>
     <version>0.1.0.dev2</version>
     <content>
-        <!-- No Workbenches, No Macros, No Themes -->
+        
     </content>
-    <date>2025-04-11</date>
+    <date>2025-04-29</date>
     <pythonmin>3.10</pythonmin>
     <icon>freecad/channels/resources/icons/channels.svg</icon>
     <license file="LICENSE">LGPL-3.0-or-later</license>
     <freecadmin>1.0</freecadmin>
-    <license>LGPL-3.0-or-later</license>
     <icon>freecad/channels/resources/icons/channels.svg</icon>
     <maintainer email="mnesarco@gmail.com">Frank David Martínez Muñoz</maintainer>
     <author email="mnesarco@gmail.com">Frank David Martínez Muñoz</author>
@@ -24,6 +23,5 @@
     <url type="documentation">https://github.com/mnesarco/Channels/wiki/</url>
     <url type="readme">https://github.com/mnesarco/Channels/blob/main/README.md</url>
     <url type="repository" branch="main">https://github.com/mnesarco/Channels/</url>
-    <depend type="internal">Import</depend>
-    <depend type="internal">Part</depend>
+    <depend type="internal">part</depend>
 </package>

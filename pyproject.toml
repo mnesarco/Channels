@@ -76,4 +76,4 @@ icon = "freecad/channels/resources/icons/channels.svg"
 freecad-min = "1.0"
 # lupdate-files = []
 lupdate-langs = ["es", "en", "de", "fr"]
-internal-dependencies = ["Import", "Part"]
+internal-dependencies = ["part"]
