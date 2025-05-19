@@ -72,7 +72,7 @@ ignore-decorators = ["fpo.template", "contextlib.contextmanager"]
 
 [tool.freecad]
 branch = "main"
-icon = "freecad/channels/resources/icons/channels.svg"
+icon = "freecad/channels/resources/icons/preferences-channels.svg"
 freecad-min = "1.0"
 # lupdate-files = []
 lupdate-langs = ["es", "en", "de", "fr"]
