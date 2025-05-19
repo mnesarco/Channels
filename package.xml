@@ -10,7 +10,7 @@
     <icon>freecad/channels/resources/icons/channels.svg</icon>
     <license file="LICENSE">LGPL-3.0-or-later</license>
     <freecadmin>1.0</freecadmin>
-    <icon>freecad/channels/resources/icons/channels.svg</icon>
+    <icon>freecad/channels/resources/icons/preferences-channels.svg</icon>
     <maintainer email="mnesarco@gmail.com">Frank David Martínez Muñoz</maintainer>
     <author email="mnesarco@gmail.com">Frank David Martínez Muñoz</author>
     <tag>2d</tag>
