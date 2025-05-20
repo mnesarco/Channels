@@ -14,9 +14,10 @@ from __future__ import annotations
 __author__ = "Frank David Martínez Muñoz"
 __copyright__ = "(c) 2024 Frank David Martínez Muñoz."
 __license__ = "LGPL 2.1"
-__version__ = "1.0.0-beta5"
+__version__ = "1.0.0-beta7"
 __min_python__ = "3.10"
 __min_freecad__ = "0.22"
+__contributors__ = "Gaël Écorchard"
 
 
 # Conventions for sections in this file:
@@ -484,10 +485,10 @@ class PropertyStatus(_DocIntEnum):
     PartialTrigger = 10,     "allow change in partial doc"
     NoRecompute = 11,        "don't touch owner for recompute on property change"
     Single = 12,             "for save/load of floating point numbers"
-    Ordered = 13,            "for PropertyLists whether the order of the elements is relevant for the container using it"
-    EvalOnRestore = 14,      "In case of expression binding, evaluate the expression on restore and touch the object on value change."
+    Ordered = 13,            "for PropertyLists whether the order of the elements is relevant for the container using it"  # noqa: E501
+    EvalOnRestore = 14,      "In case of expression binding, evaluate the expression on restore and touch the object on value change."  # noqa: E501
     Busy = 15,               "internal use to avoid recursive signaling"
-    CopyOnChange = 16,       "for Link to copy the linked object on change of the property with this flag"
+    CopyOnChange = 16,       "for Link to copy the linked object on change of the property with this flag"  # noqa: E501
     UserEdit = 17,           "cause property editor to create button for user defined editing"
 
     # The following bits are corresponding to PropertyType set when the
@@ -558,7 +559,8 @@ class Property(Generic[_PT]):
     description: str  # GUI description
     mode: PropertyMode  # PropertyEditor mode for the property
     enum: type[Enum]  # Type of enum used by "App::PropertyEnumeration"
-    options: Callable  # Callable that provides a list of options
+    options: Callable  # Callable that provides a list of options, either
+                       # as options() or options(obj)
 
     # ──────────
     def __init__(  # noqa: D107
@@ -608,7 +610,10 @@ class Property(Generic[_PT]):
             if self.enum:
                 setattr(fp, self.name, [str(e.value) for e in list(self.enum)])
             elif self.options:
-                setattr(fp, self.name, self.options())
+                if _f_arity(self.options) == 0:
+                    setattr(fp, self.name, self.options())
+                else:
+                    setattr(fp, self.name, self.options(fp))
             self.reset(fp)
 
     # ──────────
@@ -620,15 +625,23 @@ class Property(Generic[_PT]):
     # ──────────
     def update(self, obj: ObjectRef, value: _PT) -> None:
         """Set the value of the property in the remote object."""
-        if hasattr(obj, self.name):
-            if self.enum:
-                setattr(obj, self.name, str(value.value))
+        if not hasattr(obj, self.name):
+            return
+        if self.enum:
+            setattr(obj, self.name, str(value.value))
+            return
+        attr = getattr(obj, self.name)
+        if isinstance(attr, App.Units.Quantity):
+            if isinstance(value, str):
+                setattr(obj, self.name, App.Units.Quantity(value))
+            elif isinstance(value, tuple):
+                setattr(obj, self.name, App.Units.Quantity(*value))
+            elif isinstance(value, App.Units.Quantity):
+                setattr(obj, self.name, value)
             else:
-                attr = getattr(obj, self.name)
-                if hasattr(attr, "Value"):
-                    attr.Value = value
-                else:
-                    setattr(obj, self.name, value)
+                attr.Value = value
+            return
+        setattr(obj, self.name, value)
 
     # ──────────
     def read(self, obj: ObjectRef) -> _PT:
@@ -664,19 +677,19 @@ class Property(Generic[_PT]):
 
     if TYPE_CHECKING:
         # This fake typing here is to allow code completion to infer the property type
-        def __get__(self, obj, obj_type=None) -> _PT: ...  # noqa: ANN001
-        def __set__(self, obj, value: _PT) -> None: ...  # noqa: ANN001
+        def __get__(self, obj, obj_type=None) -> _PT: ...  # noqa: ANN001, D105
+        def __set__(self, obj, value: _PT) -> None: ...  # noqa: ANN001, D105
 
 
 ##% ────────────────────────────────────────────────────────────────────────────
 class PropertyMeta:
-    """Property metadata proxy"""
+    """Property metadata proxy."""
 
     prop: Property
     target: ObjectRef
 
     def __init__(self, property: Property, target: ObjectRef) -> None:
-        """Bounded property proxy to ObjectRef"""
+        """Bounded property proxy to ObjectRef."""
         self.prop = property
         self.target = target
 
@@ -1105,6 +1118,7 @@ class PreferencePreset:
     preset: str
 
     def __post_init__(self) -> None:
+        """Sanitize preset name."""
         if "/" in self.preset:
             self.preset = self.preset.replace("/", "-")
 
@@ -1386,6 +1400,7 @@ def proxy(  # noqa: ANN201
         t_dumps(meta)
         t_proxy_view_provider_name_override(meta)
         t_proxy_dirty(meta)
+        t_proxy_is_active(meta)
         return cls
 
     return transformer
@@ -1899,6 +1914,17 @@ def t_proxy_view_provider_name_override(_, meta: TypeMeta) -> GeneratedMethod:
     return None
 
 
+##$ ────────────────────────────────────────────────────────────────────────────
+@template(name="is_active", allow_override=True)
+def t_proxy_is_active(overridden: Any, _: TypeMeta) -> GeneratedMethod:
+    if overridden:
+        return overridden
+
+    def is_active(self: Any) -> bool:
+        return getattr(self, "__so_state__", None) == FeatureState.Active
+    return is_active
+
+
 ##$ ┌───────────────────────────────────────────────────────────────────────────┐
 ##$ │ ViewProxy Templates                                                       │
 ##$ └───────────────────────────────────────────────────────────────────────────┘
@@ -2071,6 +2097,10 @@ def t_view_proxy_dbl_click(_, meta: TypeMeta) -> GeneratedMethod:
 @template(name="onChanged", override_error_msg=f"Use {_ON_CHANGE} instead")
 def t_view_proxy_change(_, meta: TypeMeta) -> GeneratedMethod:
     def onChanged(self: Any, vp: ViewProviderDocumentObject, prop_name: str) -> None:
+        data_proxy = getattr(vp.Object, "Proxy", None)
+        if getattr(data_proxy, "__so_state__", None) != FeatureState.Active:
+            return
+
         new_value = getattr(vp, prop_name, None)
         meta.apply_extensions(self, vp, _ON_CHANGE, prop_name)
         prop = meta.property_lookup.get(prop_name, None)
@@ -2885,6 +2915,7 @@ if TYPE_CHECKING:
         def on_deserialize(self, event: events.DeserializeEvent) -> None: ...
         def on_remove(self, event: events.RemoveEvent) -> None: ...
         def is_dirty(self) -> bool: ...
+        def is_active(self) -> bool: ...
         def on_migrate_class(self, event: events.MigrationEvent) -> None: ...
         def on_migrate_upgrade(self, event: events.MigrationEvent) -> None: ...
         def on_migrate_downgrade(self, event: events.MigrationEvent) -> None: ...
@@ -2919,6 +2950,7 @@ if TYPE_CHECKING:
         def on_deserialize(self, event: events.DeserializeEvent) -> None: ...
         def on_change(self, event: events.PropertyChangedEvent) -> None: ...
         def on_before_change(self, event: events.PropertyWillChangeEvent) -> None: ...
+        def on_object_change(self, event: events.DataChangedEvent) -> None: ...
 
         def on_context_menu(self, event: events.ContextMenuEvent) -> None: ...
         def icon(self) -> str | None: ...
@@ -2926,12 +2958,11 @@ if TYPE_CHECKING:
         def display_modes(self) -> list[str]: ...
         def default_display_mode(self) -> str: ...
 
-        def on_claim_children(self, event: events.ClaimChildrenEvent) -> None: ...
+        def on_claim_children(self, event: events.ClaimChildrenEvent) -> list[DocumentObject]: ...
         def on_edit_start(self, event: events.EditStartEvent) -> bool | None: ...
         def on_edit_end(self, event: events.EditEndEvent) -> bool | None: ...
         def on_delete(self, event: events.DeleteEvent) -> bool: ...
         def on_dbl_click(self, event: events.DoubleClickEvent) -> bool: ...
-        def on_object_change(self, event: events.DataChangedEvent) -> None: ...
 
         def can_drag_objects(self) -> bool: ...
         def can_drop_objects(self) -> bool: ...

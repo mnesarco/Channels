@@ -42,6 +42,7 @@ from pathlib import Path
 from typing import (
     Any,
     ClassVar,
+    Protocol,
     TypeAlias,
     TYPE_CHECKING,
 )
@@ -67,12 +68,14 @@ if TYPE_CHECKING:
         Qt,
         QTimer,
         Signal,
+        SignalInstance,
         Slot,
         QEvent,
     )
 
     from PySide6.QtGui import (
         QAction,
+        QActionGroup,
         QBrush,
         QCloseEvent,
         QColor,
@@ -84,6 +87,8 @@ if TYPE_CHECKING:
         QPaintEvent,
         QPen,
         QPixmap,
+        QTextCursor,
+        QKeyEvent,
     )
 
     from PySide6.QtWidgets import (
@@ -101,6 +106,7 @@ if TYPE_CHECKING:
         QLabel,
         QLayout,
         QLineEdit,
+        QTextEdit,
         QMainWindow,
         QMessageBox,
         QPlainTextEdit,
@@ -109,6 +115,7 @@ if TYPE_CHECKING:
         QScrollArea,
         QSpinBox,
         QSplitter,
+        QStackedLayout,
         QTableWidget,
         QTableWidgetItem,
         QTabWidget,
@@ -141,6 +148,7 @@ if not TYPE_CHECKING:
 
     from PySide.QtGui import (  # type: ignore[attr-defined]
         QAction,  # noqa: F401
+        QActionGroup,  # noqa: F401
         QAbstractItemView,
         QApplication,
         QBrush,
@@ -160,6 +168,7 @@ if not TYPE_CHECKING:
         QLabel,
         QLayout,
         QLineEdit,
+        QTextEdit,
         QMainWindow,
         QMessageBox,
         QMoveEvent,
@@ -174,6 +183,7 @@ if not TYPE_CHECKING:
         QScrollArea,
         QSpinBox,
         QSplitter,
+        QStackedLayout,
         QTableWidget,
         QTableWidgetItem,
         QTabWidget,
@@ -183,6 +193,8 @@ if not TYPE_CHECKING:
         QVBoxLayout,
         QWidget,
         QSizePolicy,
+        QTextCursor,
+        QKeyEvent,
     )
 
     from PySide.QtSvg import QSvgRenderer  # type: ignore[attr-defined]
@@ -235,15 +247,20 @@ def setup_layout(
 ) -> Generator[QWidget, Any, None]:
     """Setup layout and add wrapper widget if required."""
     set_qt_attrs(layout, **kwargs)
-    parent = build_context().current()
-    if parent.layout() is not None or add is False:
+
+    if  add is False or build_context().current().layout() is not None:
         w = QWidget()
+        w.setContentsMargins(0, 0, 0, 0)
         w.setLayout(layout)
         if add:
+            parent = build_context().current()
             parent.layout().addWidget(w)
+        else:
+            parent = w
         with build_context().stack(w):
             yield w
     else:
+        parent = build_context().current()
         parent.setLayout(layout)
         yield parent
 
@@ -276,6 +293,10 @@ def place_widget(
     if layout is None:
         layout = build_context().default_layout_provider()
         current.setLayout(layout)
+
+    if isinstance(layout, QStackedLayout):
+        layout.addWidget(widget)
+        return
 
     if label is None:
         layout.addWidget(widget, stretch, alignment)
@@ -642,6 +663,8 @@ class DialogWidget(QDialog):
 
     onClose = Signal(QCloseEvent)
     onLanguageChange = Signal()
+    onResize = Signal(QResizeEvent)
+    onMove = Signal(QMoveEvent)
 
     def __init__(self, *args: tuple, **kwargs: KwArgs) -> None:
         super().__init__(*args, **kwargs)
@@ -656,6 +679,13 @@ class DialogWidget(QDialog):
             self.onLanguageChange.emit()
         super().changeEvent(event)
 
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        self.onResize.emit(event)
+        return super().resizeEvent(event)
+
+    def moveEvent(self, event: QMoveEvent) -> None:
+        self.onMove.emit(event)
+        return super().moveEvent(event)
 
 ##% [Widget] Dialog
 ##% ────────────────────────────────────────────────────────────────────────────
@@ -668,7 +698,7 @@ def Dialog(
     modal: bool = True,
     parent: QWidget = None,
     **kwargs: KwArgs,
-) -> Generator[QDialog, Any, Any]:
+) -> Generator[DialogWidget, Any, Any]:
     """
     Dialog context manager/widget.
 
@@ -777,8 +807,9 @@ def Container(
     *,
     add: bool = True,
     top: bool = False,
+    q_widget: type[QWidget] | None = None,
     **kwargs: KwArgs,
-) -> Generator[QFrame, Any, Any]:
+) -> Generator[QWidget, Any, Any]:
     """
     Simple container context/widget.
 
@@ -789,7 +820,7 @@ def Container(
     :param dict[str, Any] **kwargs: Qt properties
     :return QFrame: The container widget
     """
-    w = ContainerWidget()
+    w = ContainerWidget() if q_widget is None else q_widget()
     set_qt_attrs(w, **kwargs)
 
     ctx = build_context()
@@ -947,6 +978,23 @@ def Row(*, add: bool = True, **kwargs: KwArgs) -> Generator[QWidget, None, None]
     yield from setup_layout(QHBoxLayout(), add=add, **kwargs)
 
 
+##% [Layout] Stack (Stacked Layout)
+##% ────────────────────────────────────────────────────────────────────────────
+@contextmanager
+def Stack(*, add: bool = True, **kwargs: KwArgs) -> Generator[QWidget, Any, Any]:
+    """
+    Stacked context/layout
+
+    Example:
+    ~:code:../examples/ui/widgets.py[Stack]:~
+
+    :param bool add: add to current context, defaults to True
+    :param dict[str, Any] **kwargs: Qt properties
+    :return QWidget: A container widget with Stacked layout
+    """
+    yield from setup_layout(QStackedLayout(), add=add, **kwargs)
+
+
 ##% [Widget Impl] HtmlWidget
 ##% ────────────────────────────────────────────────────────────────────────────
 class HtmlWidget(QLabel):
@@ -1090,6 +1138,48 @@ def TextLabel(
     return label
 
 
+##% [Widget] IconLabel
+##% ────────────────────────────────────────────────────────────────────────────
+def IconLabel(
+    icon: str | QIcon | None = None,
+    *,
+    size: tuple[int, int] = (16, 16),
+    stretch: int = 0,
+    alignment: Qt.Alignment = DEFAULT_ALIGNMENT,
+    add: bool = True,
+    **kwargs: KwArgs,
+) -> QLabel:
+    """
+    Simple icon label widget.
+
+    Example:
+    ~:code:../examples/ui/widgets.py[IconLabel]:~
+
+    :param str icon: icon name or QIcon, defaults to None
+    :param int stretch: layout stretch, defaults to 0
+    :param Qt.Alignment alignment: layout alignment, defaults to Qt.Alignment()
+    :param bool add: add to current context, defaults to True
+    :param dict[str, Any] **kwargs: Qt properties of QLabel
+    :return QLabel: The widget
+    """
+    label = QLabel()
+    if isinstance(icon, str):
+        icon = QIcon.fromTheme(icon)
+    if isinstance(icon, QIcon):
+        label.setPixmap(icon.pixmap(*size))
+
+    label.setEnabled(False)
+    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    label.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
+    label.setAutoFillBackground(True)
+    label.setMinimumSize(*size)
+
+    set_qt_attrs(label, **kwargs)
+    if add:
+        place_widget(label, stretch=stretch, alignment=alignment)
+    return label
+
+
 ##% [Widget] InputFloat
 ##% ────────────────────────────────────────────────────────────────────────────
 def InputFloat(
@@ -1157,6 +1247,34 @@ class InputTextWidget(QLineEdit):
         self.setText(str(value))
 
 
+##% [Widget Impl] InputTextMultilineWidget
+##% ────────────────────────────────────────────────────────────────────────────
+class InputTextMultilineWidget(QTextEdit):
+    """Multiline input text widget."""
+
+    def __init__(self, max_length: int = 0, *args: tuple, **kwargs: KwArgs) -> None:
+        super().__init__(*args, **kwargs)
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.max_length = max_length
+        if max_length > 0:
+            self.textChanged.connect(self._check_length)
+
+    def _check_length(self) -> None:
+        """Check length and truncate if needed."""
+        text = self.toPlainText()
+        if len(text) > self.max_length:
+            self.setPlainText(text[: self.max_length])
+            self.moveCursor(QTextCursor.MoveOperation.End)
+
+    def value(self) -> str:
+        """Return text content."""
+        return self.toPlainText()
+
+    def setValue(self, value: Any) -> None:
+        """Set text content."""
+        self.setPlainText(str(value))
+
+
 ##% [Widget] InputText
 ##% ────────────────────────────────────────────────────────────────────────────
 def InputText(
@@ -1186,6 +1304,44 @@ def InputText(
     """
     widget = InputTextWidget()
     widget.setText(value)
+    set_qt_attrs(widget, **kwargs)
+    if name:
+        widget.setObjectName(name)
+    if add:
+        place_widget(widget, label=label, stretch=stretch, alignment=alignment)
+    return widget
+
+
+##% [Widget] InputTextMultiline
+##% ────────────────────────────────────────────────────────────────────────────
+def InputTextMultiline(
+    value: str = "",
+    *,
+    name: str | None = None,
+    label: QWidget | str = None,
+    stretch: int = 0,
+    alignment: Qt.Alignment = DEFAULT_ALIGNMENT,
+    max_length: int = 0,
+    add: bool = True,
+    **kwargs: KwArgs,
+) -> InputTextMultilineWidget:
+    """
+    Input text widget (multiline).
+
+    Example:
+    ~:code:../examples/ui/widgets.py[InputText]:~
+
+    :param str value: initial value, defaults to ""
+    :param str name: objectName, defaults to None
+    :param Union[QWidget, str] label: gui label, defaults to None
+    :param int stretch: layout stretch, defaults to 0
+    :param Qt.Alignment alignment: layout alignment, defaults to Qt.Alignment()
+    :param bool add: add to current context, defaults to True
+    :param dict[str, Any] **kwargs: Qt properties
+    :return InputTextMultilineWidget: The widget
+    """
+    widget = InputTextMultilineWidget(max_length=max_length)
+    widget.setValue(value)
     set_qt_attrs(widget, **kwargs)
     if name:
         widget.setObjectName(name)
@@ -1237,6 +1393,8 @@ class LabelEx(QWidget):
 class InputQuantityWidget(QWidget):
     """Input quantity widget."""
 
+    valueChanged = Signal(object)
+
     def __init__(self, editor: QWidget) -> None:
         super().__init__()
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
@@ -1247,14 +1405,29 @@ class InputQuantityWidget(QWidget):
         self.editor = editor
         editor.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
 
+        if hasattr(editor, "valueChanged"):
+            editor.valueChanged.connect(lambda v: self.valueChanged.emit(v))
+        elif hasattr(editor, "textChanged"):
+            editor.textChanged.connect(lambda v: self.valueChanged.emit(v))
+
     def value(self) -> Any:
         return self.editor.property("rawValue")
+
+    def quantity(self) -> Any:
+        return self.editor.property("value")
 
     def rawValue(self) -> Any:
         return self.editor.property("rawValue")
 
     def setValue(self, value: Any) -> None:
-        return self.editor.setProperty("rawValue", value)
+        if value is None:
+            return
+        if isinstance(value, App.Units.Quantity):
+            self.editor.setProperty("value", value)
+        elif hasattr(self.editor, "setValue"):
+            self.editor.setValue(value)
+        elif hasattr(self.editor, "setText"):
+            self.editor.setText(str(value))
 
     def setMinimum(self, value: float) -> None:
         return self.editor.setProperty("minimum", value)
@@ -1271,36 +1444,103 @@ class InputQuantityWidget(QWidget):
     def setToolTip(self, tip: str) -> None:
         self.editor.setToolTip(tip)
 
-    def moveEvent(self, event: QMoveEvent) -> None:
-        super().moveEvent(event)
-        self.fixValidationIconSize()
+    # def moveEvent(self, event: QMoveEvent) -> None:
+    #     super().moveEvent(event)
+    #     self.fixValidationIconSize()
 
-    def resizeEvent(self, event: QResizeEvent) -> None:
-        super().resizeEvent(event)
-        self.fixValidationIconSize()
+    # def resizeEvent(self, event: QResizeEvent) -> None:
+    #     super().resizeEvent(event)
+    #     self.fixValidationIconSize()
 
-    def fixValidationIconSize(self) -> None:
-        # Fix nasty huge validation icon
-        if isinstance(icon := self.editor.findChild(QLabel), QLabel):
-            icon.setScaledContents(True)
-            size = self.frameSize()
-            h = size.height() - 8
-            left = size.width() - h - 4
-            icon.setStyleSheet(f"""QLabel {{
-                                   border: none;
-                                   padding: 0px;
-                                   max-width: {h}px;
-                                   max-height:{h}px;
-                                   min-width: {h}px;
-                                   min-height:{h}px;
-                                   }}
-                                   """)
-            icon.move(left, 4)
-            icon.update()
+    # def fixValidationIconSize(self) -> None:
+    #     # Fix nasty huge validation icon
+    #     if isinstance(icon := self.editor.findChild(QLabel), QLabel):
+    #         icon.setScaledContents(True)
+    #         size = self.frameSize()
+    #         h = size.height() - 8
+    #         left = size.width() - h - 4
+    #         icon.setStyleSheet(f"""QLabel {{
+    #                                border: none;
+    #                                padding: 0px;
+    #                                max-width: {h}px;
+    #                                max-height:{h}px;
+    #                                min-width: {h}px;
+    #                                min-height:{h}px;
+    #                                }}
+    #                                """)
+    #         icon.move(left, 4)
+    #         icon.update()
+
+    def setFocus(self) -> None:
+        """Set focus to the editor."""
+        self.editor.setFocus()
 
 
 ##% [Widget] InputQuantity
 ##% ────────────────────────────────────────────────────────────────────────────
+
+
+class PropertyAccessorAdapter(Protocol):
+    """
+    Protocol for adapting property access on FreeCAD DocumentObjects.
+
+    This adapter defines a standard interface for getting and setting properties
+    on FreeCAD DocumentObject instances, allowing for flexible property access
+    strategies.
+    """
+
+    def get(self, obj: DocumentObject, prop: str) -> Any: ...
+    def set(self, obj: DocumentObject, prop: str, value: Any) -> None: ...
+
+
+class InputPropertyWrapper(QObject):
+    """
+    A wrapper class that connects a FreeCAD property to a UI input widget.
+
+    Enabling two-way data binding and automatic updates.
+    This class binds a property of a FreeCAD DocumentObject to an InputQuantityWidget,
+    synchronizing changes between the UI and the underlying object property.
+    It supports optional accessor adapters for custom get/set logic and handles
+    automatic recomputation of the object and any dependent VarSet objects when
+    the property value changes.
+    """
+
+    def __init__(
+        self,
+        parent: InputQuantityWidget,
+        *,
+        obj: DocumentObject,
+        property: str,
+        auto_apply: bool,
+        accessor_adapter: PropertyAccessorAdapter | None = None,
+    ) -> None:
+        super().__init__(parent)
+
+        ee = Gui.ExpressionBinding(parent.editor)
+        ee.bind(obj, property)
+        ee.setAutoApply(auto_apply)
+        self.ee = ee
+
+        self.accessor_adapter = accessor_adapter
+        if accessor_adapter:
+            getter, setter = accessor_adapter.get, accessor_adapter.set
+        else:
+            getter, setter = getattr, setattr
+
+        value = getter(obj, property)
+        parent.setValue(value)
+
+        def on_value_changed(v: Any) -> None:
+            setter(obj, property, v)
+            obj.recompute()
+            for ref in obj.InListRecursive:
+                if ref.isDerivedFrom("App::VarSet"):
+                    ref.recompute()
+
+        parent.valueChanged.connect(on_value_changed)
+
+
+
 def InputQuantity(
     value: Numeric = None,
     *,
@@ -1312,9 +1552,12 @@ def InputQuantity(
     stretch: int = 0,
     alignment: Qt.Alignment = DEFAULT_ALIGNMENT,
     unit: str | None = None,
-    obj: object | None = None,
+    obj: DocumentObject | None = None,
     property: str | None = None,
+    auto_apply: bool = True,
     add: bool = True,
+    widget_type: str = "Gui::InputField",
+    accessor_adapter: PropertyAccessorAdapter | None = None,
     **kwargs: KwArgs,
 ) -> InputQuantityWidget:
     """
@@ -1342,7 +1585,7 @@ def InputQuantity(
         msg = f"Invalid property name: {property}"
         raise ValueError(msg)
 
-    editor = _fc_ui_loader.createWidget("Gui::InputField")
+    editor: QWidget = _fc_ui_loader.createWidget(widget_type)
     widget = InputQuantityWidget(editor)
     if min is not None:
         widget.setMinimum(min)
@@ -1358,22 +1601,15 @@ def InputQuantity(
         widget.setObjectName(name)
 
     if obj and property:
-        ee = Gui.ExpressionBinding(editor)
-        ee.bind(obj, property)
-        ee.setAutoApply(True)
-        editor.valueChanged.connect(lambda v: setattr(obj, property, v))
+        widget.InputPropertyWrapper = InputPropertyWrapper(
+            widget,
+            obj=obj,
+            property=property,
+            auto_apply=auto_apply,
+            accessor_adapter=accessor_adapter,
+        )
     elif value is not None:
-        if isinstance(value, str):
-            editor.setText(value)
-        elif isinstance(value, (float, int)):
-            if isinstance(unit, str):
-                editor.setText(f"{float(value)} {unit}")
-            elif isinstance(unit, App.Units.Unit):
-                editor.setText(App.Units.Quantity(value, unit).UserString)
-        elif isinstance(value, App.Units.Quantity):
-            editor.setText(value.UserString)
-        else:
-            widget.setValue(value)
+        widget.setValue(value)
 
     if add:
         place_widget(widget, label=label, stretch=stretch, alignment=alignment)
@@ -1699,13 +1935,25 @@ def InputVector(
 class InputOptionsWidget(QComboBox):
     """Basic ComboBox input to select from options."""
 
-    def __init__(self, data: dict[str, Hashable]) -> None:
+    class SelectAllLineEdit(QLineEdit):
+        def focusInEvent(self, event: QEvent) -> None:
+            super().focusInEvent(event)
+            self.selectAll()
+
+    def __init__(self, data: dict[str, Hashable], selectOnFocus: bool) -> None:
         super().__init__()
         for label, value in data.items():
             self.addItem(str(label), value)
+        if selectOnFocus:
+            self.setLineEdit(InputOptionsWidget.SelectAllLineEdit(self))
 
     def addOption(self, label: str, value: Hashable) -> None:
         self.addItem(str(label), value)
+
+    def setOptions(self, data: dict[str, Hashable]) -> None:
+        self.clear()
+        for label, value in data.items():
+            self.addItem(str(label), value)
 
     def removeOption(self, value: Hashable) -> None:
         index = self.findData(value)
@@ -1735,6 +1983,7 @@ def InputOptions(
     stretch: int = 0,
     alignment: Qt.Alignment = DEFAULT_ALIGNMENT,
     add: bool = True,
+    select_on_focus: bool = False,
     **kwargs: KwArgs,
 ) -> InputOptionsWidget:
     """
@@ -1752,7 +2001,7 @@ def InputOptions(
     :param dict[str, Any] **kwargs: Qt properties
     :return InputOptionsWidget: The widget
     """
-    widget = InputOptionsWidget(options)
+    widget = InputOptionsWidget(options, selectOnFocus=select_on_focus)
     set_qt_attrs(widget, **kwargs)
     if value is not None:
         widget.setValue(value)
