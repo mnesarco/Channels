@@ -220,24 +220,30 @@ class AutoGui(QObject):
     widgets: list[tuple[PrefWidget, PreferencePreset]]
     sections: list[tuple[ui.QGroupBox, dtr | str]]
     container: ui.QWidget | None = None
+    enable_presets: bool = True
 
     def __init__(
         self,
         title: str | dtr,
         elements: Callable[[], list[GuiElement]] | list[GuiElement],
+        enable_presets: bool = True,
     ) -> None:
         from . import fcui as ui
 
         super().__init__()
 
+        self.enable_presets = enable_presets
         items = elements() if callable(elements) else elements
         widgets: list[tuple[PrefWidget, PreferencePreset]] = []
         sections: list[tuple[ui.QGroupBox, dtr | str]] = []
 
         margins = ui.margins()
         with ui.Container(windowTitle=str(title), contentsMargins=margins) as form:
-            with ui.GroupBox(contentsMargins=margins, title=str(dtr("Preferences", "Preset"))):
+            with ui.GroupBox(contentsMargins=margins, title=str(dtr("Preferences", "Preset"))) as presets_box:
                 selector = PresetSelector(items, widgets)
+            if not enable_presets:
+                presets_box.setFixedHeight(0)
+                presets_box.setEnabled(False)
             section: ui.GroupBox = None
             for item in items:
                 if isinstance(item, Preference):
@@ -520,6 +526,7 @@ def make_preferences_page(
     group: str,
     title: str | dtr,
     elements: Callable[[], list[GuiElement]] | list[GuiElement],
+    enable_presets: bool,
 ) -> type[PreferencesPage]:
     """
     Dynamically create a Preferences Page
@@ -528,7 +535,7 @@ def make_preferences_page(
     class Page(PreferencesPage):
         def build(self) -> ui.QWidget:
             if (gui := getattr(self, "gui", None)) is None:
-                gui = AutoGui(title, elements)
+                gui = AutoGui(title, elements, enable_presets)
                 self.gui = gui
             return gui.form
 
@@ -550,7 +557,7 @@ def make_preferences_page(
     return Page
 
 
-def basic_preferences_page(*, group: str, title: str | dtr):
+def basic_preferences_page(*, group: str, title: str | dtr, enable_presets: bool = True):
     """
     Decorator to take a list of GuiElements returned from a function and build a Page.
     """
@@ -558,7 +565,12 @@ def basic_preferences_page(*, group: str, title: str | dtr):
     def deco(
         elements: Callable[[], list[GuiElement]] | list[GuiElement],
     ) -> PreferencesPageInstaller:
-        page = make_preferences_page(group=group, title=title, elements=elements)
+        page = make_preferences_page(
+            group=group,
+            title=title,
+            elements=elements,
+            enable_presets=enable_presets,
+        )
         return preferences_page(group=group)(page)
 
     return deco
@@ -578,6 +590,7 @@ class auto_gui:
         default_ui_group: str,
         default_ui_page: str | dtr,
         install: bool = True,
+        enable_presets: bool = True,
     ) -> None:
         """Generate and install PreferencePages in main FreeCAD Preferences editor"""
         self.cls = None
@@ -585,6 +598,7 @@ class auto_gui:
         self.default_ui_page = default_ui_page
         self.install = install
         self.installed = False
+        self.enable_presets = enable_presets
 
     def __call__(self, cls: _P) -> _P:
         if not issubclass(cls, Preferences):
@@ -654,7 +668,7 @@ class auto_gui:
         gui = defaultdict(list)
         for group, pages in self.ui_groups.items():
             for page, items in pages.items():
-                gui[group].append(lambda p=page, i=items: AutoGui(p, i))
+                gui[group].append(lambda p=page, i=items: AutoGui(p, i, self.enable_presets))
         return gui
 
     @events.app.gui_up
@@ -664,7 +678,7 @@ class auto_gui:
             self.installed = True
             for group, pages in self.ui_groups.items():
                 for page, items in pages.items():
-                    build = basic_preferences_page(group=group, title=page)
+                    build = basic_preferences_page(group=group, title=page, enable_presets=self.enable_presets)
                     build(items).install()
 
 

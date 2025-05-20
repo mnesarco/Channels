@@ -15,6 +15,7 @@ from .vendor.fcapi.lang import dtr
 @auto_gui(
     default_ui_group="Channels",
     default_ui_page=dtr("Channels", "General"),
+    enable_presets=False,
 )
 class ChannelsPreferences(Preferences):
     """
