@@ -17,7 +17,7 @@ authors = [
 keywords = ["mesh", "blender", "freecad", "addons", "workbench"]
 
 [project.urls]
-repository = "https://github.com/mnesarco/Channels/"
+repository = "https://github.com/mnesarco/Channels"
 documentation = "https://github.com/mnesarco/Channels/wiki/"
 readme = "https://github.com/mnesarco/Channels/blob/main/README.md"
 

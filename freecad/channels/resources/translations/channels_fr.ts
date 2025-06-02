@@ -9,17 +9,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../preferences.py" line="30"/>
+        <location filename="../../preferences.py" line="31"/>
         <source>Start Channels service on startup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../preferences.py" line="34"/>
+        <location filename="../../preferences.py" line="35"/>
         <source>Start Channels service on startup and allow incoming connections.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../preferences.py" line="35"/>
+        <location filename="../../preferences.py" line="36"/>
         <source>Service</source>
         <translation type="unfinished"></translation>
     </message>
@@ -68,60 +68,60 @@
 <context>
     <name>Preferences</name>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="239"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="242"/>
         <source>Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="348"/>
-        <location filename="../../vendor/fcapi/preferences.py" line="358"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="354"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="364"/>
         <source>New preset name must be different</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="361"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="367"/>
         <source>Default preset cannot be renamed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="372"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="378"/>
         <source>Default preset cannot be removed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="396"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="402"/>
         <source>Preset action:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="397"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="403"/>
         <source>Save preset as:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="398"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="404"/>
         <source>Rename preset to:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="399"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="405"/>
         <source>Delete preset:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="412"/>
-        <location filename="../../vendor/fcapi/preferences.py" line="427"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="418"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="433"/>
         <source>Preset:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="419"/>
-        <location filename="../../vendor/fcapi/preferences.py" line="457"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="425"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="463"/>
         <source>Update current preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="463"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="469"/>
         <source>Delete current preset</source>
         <translation type="unfinished"></translation>
     </message>
@@ -129,32 +129,32 @@
 <context>
     <name>Validation</name>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="693"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="707"/>
         <source>Minimum accepted value is {} {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="715"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="729"/>
         <source>Maximum accepted value is {} {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="731"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="745"/>
         <source>Maximum accepted length is {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="746"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="760"/>
         <source>Minimum accepted length is {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="758"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="772"/>
         <source>Required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../vendor/fcapi/preferences.py" line="776"/>
+        <location filename="../../vendor/fcapi/preferences.py" line="790"/>
         <source>Invalid format</source>
         <translation type="unfinished"></translation>
     </message>
