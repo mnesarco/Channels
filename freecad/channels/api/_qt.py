@@ -42,12 +42,12 @@ class channel_handler(Channel):  # noqa: N801
             :param poll: The polling interval in seconds.
             """
             try:
-                from PySide6.QtCore import QTimer  # type: ignore
+                from PySide.QtCore import QTimer  # FreeCAD's PySide! # type: ignore
             except ImportError:
                 try:
-                    from PySide2.QtCore import QTimer  # type: ignore
+                    from PySide6.QtCore import QTimer  # type: ignore
                 except ImportError:
-                    from PySide.QtCore import QTimer  # type: ignore
+                    from PySide2.QtCore import QTimer  # type: ignore
 
             def timeout() -> None:
                 if not service.is_running():
