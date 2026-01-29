@@ -53,7 +53,7 @@ class BlenderSendObj:
 
     def is_active(self) -> bool:
         selection = App.Gui.Selection.getSelection()
-        return selection and all(map(is_shape, selection))
+        return bool(selection) and all(is_shape(obj) or is_group(obj) for obj in selection)
 
 
 @commands.add(
@@ -77,7 +77,7 @@ class BlenderSendGltf:
 
     def is_active(self) -> bool:
         selection = App.Gui.Selection.getSelection()
-        return selection and all(is_shape(obj) or is_part(obj) for obj in selection)
+        return bool(selection) and all(is_shape(obj) or is_part(obj) or is_group(obj) for obj in selection)
 
 
 @commands.add(
@@ -116,3 +116,7 @@ def is_shape(obj: App.DocumentObject) -> bool:
 
 def is_part(obj: App.DocumentObject) -> bool:
     return obj.isDerivedFrom("App::Part")
+
+
+def is_group(grp: App.DocumentObject) -> bool:
+    return grp.isDerivedFrom("App::DocumentObjectGroup")

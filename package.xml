@@ -1,7 +1,7 @@
 <package format="1">
     <name>Channels</name>
     <description>FreeCAD Channels</description>
-    <version>0.1.0.dev3</version>
+    <version>0.1.0.dev4</version>
     <content>
 
     </content>
@@ -13,12 +13,8 @@
     <maintainer email="mnesarco@gmail.com">Frank David Martínez Muñoz</maintainer>
     <author email="mnesarco@gmail.com">Frank David Martínez Muñoz</author>
     <tag>2d</tag>
-    <tag>addons</tag>
     <tag>blender</tag>
-    <tag>freecad</tag>
     <tag>mesh</tag>
-    <tag>svg</tag>
-    <tag>workbench</tag>
     <url type="documentation">https://github.com/mnesarco/Channels/wiki/</url>
     <url type="readme">https://github.com/mnesarco/Channels/blob/main/README.md</url>
     <url type="repository" branch="main">https://github.com/mnesarco/Channels</url>

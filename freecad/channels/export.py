@@ -20,12 +20,15 @@ def temp(name: str, ext: str) -> Path:
 def export_obj(objects: list[App.DocumentObject]) -> Path:
     from importers import importOBJ  # type: ignore
 
+    export_objects = []
+    flatten_groups(objects, export_objects)
+
     filename = temp(str(uuid4()), "obj")
     if hasattr(importOBJ, "exportOptions"):
         options = importOBJ.exportOptions(str(filename))
-        importOBJ.export(objects, str(filename), options)
+        importOBJ.export(export_objects, str(filename), options)
     else:
-        importOBJ.export(objects, str(filename))
+        importOBJ.export(export_objects, str(filename))
 
     # Workaround to importOBJ.export BUG.
     # importOBJ.export references mtl file but may not create it.
@@ -40,11 +43,22 @@ def export_obj(objects: list[App.DocumentObject]) -> Path:
 def export_gltf(objects: list[App.DocumentObject]) -> Path:
     import ImportGui  # type: ignore
 
+    export_objects = []
+    flatten_groups(objects, export_objects)
+
     filename = temp(str(uuid4()), "gltf")
     if hasattr(ImportGui, "exportOptions"):
         options = ImportGui.exportOptions(str(filename))
-        ImportGui.export(objects, str(filename), options)
+        ImportGui.export(export_objects, str(filename), options)
     else:
-        ImportGui.export(objects, str(filename))
+        ImportGui.export(export_objects, str(filename))
 
     return filename
+
+
+def flatten_groups(objects: list[App.DocumentObject], flat: list[App.DocumentObject]) -> None:
+    for obj in objects:
+        if obj.isDerivedFrom("App::DocumentObjectGroup"):
+            flatten_groups(getattr(obj, "Group", []), flat)
+        else:
+            flat.append(obj)

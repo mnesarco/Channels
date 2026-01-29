@@ -1,6 +1,6 @@
 [project]
 name = "Channels"
-version = "0.1.0.dev3"
+version = "0.1.0.dev4"
 description = "FreeCAD Channels"
 readme = "README.md"
 requires-python = ">=3.10"

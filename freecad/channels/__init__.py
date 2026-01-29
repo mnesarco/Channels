@@ -7,4 +7,4 @@
 FreeCAD Channels.
 """
 
-__version__ = "0.1.0.dev3"  # <fcapi:sync-version>
+__version__ = "0.1.0.dev4"  # <fcapi:sync-version>
