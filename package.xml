@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
     <name>Channels</name>
-    <description>FreeCAD Channels</description>
+    <description>FreeCAD Channels - Connector to Blender</description>
     <version>0.1.0.dev4</version>
     <content>
 
